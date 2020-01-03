@@ -1,0 +1,5 @@
+locus,primerF,primerR,type,motif,sequence
+UA3,gctcccataac,gctcccataac,microsat,acac,
+ZF,cataacgctcc,taacgctcccataac,snp,,ttgaatcgccaccttttggcggtccacatcaag
+ZF,cataacgctcc,taacgctcccataac,snp,,ttgaatcgccaccttttggcggtccacagcaag
+COI,gaatcgccacc,acatcaag,mt,,CTTAAACTATTCCCTGACACCCCTACATTCATA
