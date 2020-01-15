@@ -58,6 +58,7 @@ In the example we have the library UA1, Aliquot Plate A1 with samples bear1 - be
 * Library, aliquot plates and primer plates mapping (keep the column names, table in .xlsx)
 Even if you don't use Aliquot Plates and Primer Plates, this file is obligate.
 You can pick any Aliquot Plate name.
+! **Please, avoid . and / symbols in loci and sample names**.
 Example:
 
 Library_BC| Aliquot Plate | Primer Plate
