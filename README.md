@@ -36,7 +36,7 @@ Don’t forget to activate obi3 environment
 ```sh
 . ~/obitools3/obi3-env/bin/activate
 ```
-If your project contains several library, you should run this script separately for each library.
+If your project contains several libraries, you should run this script separately for each library.
 ```sh
 python obitools3.py --project=./UA1 --library=UA1 --reads1=UA_F.fastq --reads2=UA_R.fastq –primers=./UA1/UA_primers.csv
 ```
