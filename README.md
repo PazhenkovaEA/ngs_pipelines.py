@@ -59,7 +59,7 @@ In the example we have the library UA1, Aliquot Plate A1 with samples bear1 - be
 Even if you don't use Aliquot Plates and Primer Plates, this file is obligate.
 You can pick any Aliquot Plate name.
 
- **Please, avoid . and / symbols in loci and sample names**.
+ **Please, avoid spaces, dots, backslashes  and special symbols in loci and sample names**.
 
 Example:
 
