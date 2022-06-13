@@ -1,0 +1,30 @@
+---
+title: 'Read count report'
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: inline
+---
+Summary report for DAB051 and DAB052 libraries.
+
+```{r setup_chunk}
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+
+source("./custom_functions.R")
+```
+
+
+```{r}
+#add genotypes to "data" folder and go on.
+proj <- "DAB073"
+genotypes <- sprintf("./%s/results/%s_genotypes.txt", proj, proj)  
+xy1 <- fread(genotypes, stringsAsFactors = FALSE,
+             colClasses = list(character = c(1, 4, 5, 7, 9, 11, 12),
+                               numeric = c(2, 3, 6)))
+showSumsByLibrary(xy1, loc = "./DAB073/results/", pos = "by_sample")
+```
