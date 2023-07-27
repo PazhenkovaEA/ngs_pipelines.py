@@ -26,7 +26,7 @@ pip install -r ngs_req.txt
 1. Create ngsfilter file 
 ```sh
 python3 create_ngsfilter.py --project=./UA1
---plates=./UA1/AliquotP.xlsx --tags=./UA1/UA_tagscombo.csv –-primernames=./UA1/UA_primers.csv --aliquotplates=AP
+--plates=./UA1/AliquotP.xlsx --tags=./UA1/UA_tagscombo.csv –-primers=./UA1/UA_primers.csv --aliquotplates=AP
 ```
 Produces files ./UA1/ngsfilters/UA1.ngsfilter (for searching of primers and tags with OBITools) and ./UA1/results/UA1_sample_positions.txt (used for quality control).
 
