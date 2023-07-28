@@ -77,7 +77,7 @@ def main(project, plates, tags, primers, aliquotplates):
                 for self.PP in self.AP_to_PP[self.AP]:
                     self.APfile = pd.read_excel(AP_path + "/" + self.AP)
                     self.APfile["tags"] = tagcombo[self.PP]
-                    self.APfile["SPositionId"] = [x for x in range(1,97)] # can we do it for non-96 wells??
+                    #self.APfile["SPositionId"] = [x for x in range(1,97)] # can we do it for non-96 wells??
                     self.intermediate = self.APfile.apply(lambda row: pd.DataFrame(list(zip(primers.iloc[:, 0], repeat(row["SPositionBC"]),
                                                            repeat(row["SPositionId"]), repeat(self.PP), repeat(row["tags"]),
                                                            primers.iloc[:, 1], primers.iloc[:, 2], repeat("F"),
