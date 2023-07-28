@@ -16,10 +16,13 @@ from collections import Counter
 @click.option("--reference_alleles", default="", help="Path to reference allele names")
 #set_value
 def main(project, primers, clean, progressive_threshold,make_graphs, reference_alleles):
-    #project = "/Users/elena/PycharmProjects/ngs_pipelines/DAB065" #user input
-    #primers = "/Users/elena/PycharmProjects/ngs_pipelines/UA_primers.csv" #user input
-    #progressive_threshold = False
+    #project ="./demo_wolf"
+    #primers = "./demo_wolf/primer_wolfA.csv"
     #clean = True
+    #progressive_threshold = False
+    #make_graphs = True
+    #reference_alleles = ""
+
     stutter = 0.18 # "Read proportion for stutter"
     disbalance = 0.33 # Disbalanced allele
     LowCount = 100  # Low reads number threshold
@@ -32,7 +35,7 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
 
     # Read table with motif data and add columns with necessary data for allele calling if absent.
     if not os.path.isfile(primers):
-        print("Check the path to the microsattelite motifs file")
+        print("Check the path to the microsatellite motifs file")
         exit()
 
     if not os.path.isfile(reference_alleles):
@@ -212,7 +215,7 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
                     L = int(motifs[motifs["locus"] == locus]["LowCount"].unique()[0])  # low amplification threshold
                     N = int(motifs[motifs["locus"] == locus]["AlleleWithNoStutterHeight"].unique()[0])
             #print(gen["Read_Count"].sum())
-            gen = gen[gen["Read_Count"] >= 5] #filter out samples with number of reads < 1 to save time
+            gen = gen[gen["Read_Count"] >= 1] #filter out samples with number of reads < 1 to save time
             split = list(gen.groupby(["Sample_Name", 'Plate','Position']))  # full version is overkill["Sample_name", 'Marker', 'Plate_name', 'Library', 'Position']
                 # Allele calling for each sample
             for data in split:
@@ -260,13 +263,12 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
         listcol = ["Sample_Name", "Plate",	"Read_Count",	"Marker",	"Run_Name",	"length",	"Position",	"called",	"flag",	"stutter",	"Sequence", "TagCombo"]
         # If clean == TRUE, return only sequences which were tagged as allele or stutter
 
-
         if clean:
             all_geno = all_geno[all_geno["stutter"] | all_geno["called"]]
         all_geno = all_geno[listcol]
         all_geno["Plate"] = all_geno["Plate"].apply(lambda row: row.replace("PP", ""))
         all_geno["Position"] = all_geno["Position"].apply(lambda row: int(row))
-        #all_geno["Position"] = all_geno["Position"].apply(lambda row: str(row))
+        all_geno["Position"] = all_geno["Position"].apply(lambda row: str(row))
         all_geno["called"] = all_geno["called"].apply(lambda row: str(row).replace("alse", "ALSE"))
         all_geno["called"] = all_geno["called"].apply(lambda row: str(row).replace("rue", "RUE"))
         all_geno["stutter"] = all_geno["stutter"].apply(lambda row: str(row).replace("alse", "ALSE"))
@@ -280,9 +282,11 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
     # visualization of alleles for each sample and locus (call R script)
     if make_graphs:
         alleles_to_graphs = []
+        all_geno.called = all_geno.called.replace({"TRUE": 1, "FALSE": 0})
+        all_geno.stutter = all_geno.stutter.replace({"TRUE": 1, "FALSE": 0})
         for data in list(all_geno.groupby(["TagCombo", 'Marker'])):
             data = data[1]
-            data = data.sort_values(["called", "Read_Count"], ascending=[False, False])
+            data = data.sort_values(["called", "length", "Read_Count"], ascending=[False, False, False])
             data.index = range(0, len(data))  # Create numeric index
             # detect duplicated lengths
             duplicates = data.duplicated(subset='length', keep=False)
@@ -304,8 +308,6 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
                          "stutter", "Run_Name", "Position", "TagCombo", "length"]]
             alleles_to_graphs.append(data)
         alleles1 = pd.concat(alleles_to_graphs)
-        alleles1.called = alleles1.called.replace({"TRUE": 1, "FALSE": 0})
-        alleles1.stutter = alleles1.stutter.replace({"TRUE": 1, "FALSE": 0})
         alleles1.to_csv(f"{result}/GenotypeExportTemp.txt", sep="\t", index=False)
         subprocess.call(["Rscript", "PlotNGSGenotype.R", result])
 
@@ -325,24 +327,25 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
     complete_reference["Variant"] = complete_reference.groupby(["Marker", "Length"]).cumcount() + 1
     complete_reference["AlleleName"] = complete_reference.apply(lambda x: "_".join([str(x["Length"]), str(x["Variant"])]) if x["Variant"] > 1 else str(x["Length"]), axis=1)
     complete_reference.to_csv(f"{result}/reference_alleles_upd_{library}", sep="\t", index=False)
-    a = pd.merge(complete_reference[["Sequence", "Marker", "AlleleName"]], all_geno, on=["Sequence", "Marker"])
 
+    a = pd.merge(complete_reference[["Sequence", "Marker", "AlleleName"]], all_geno, on=["Sequence", "Marker"])
     # Make a consensus
     cons = pd.DataFrame(columns=["Sample", "Mrkr", "Al1", "Al2", "Al3", "Al4", "NcnfA1", "NCnfA2", "ConfirmedAlleles",
                                  "UnconfirmedAlleles", "NAmp", "NAmpOK", "Success", "ADO", "ADORate", "QualityIndex"])
 
     # Estimate a number of replicates
-    ngsfilter = pd.read_csv('/Users/elena/PycharmProjects/ngs_pipelines/DIVJA088/ngsfilters/DIVJA088.ngsfilter', sep="\t", header=None)
+    ngsfilter = pd.read_csv(f"{project}/ngsfilters/{library}.ngsfilter", sep="\t", header=None)
     ngsfilter[["Marker", "Sample_Name"]] = ngsfilter[[0, 1]]
     ngsfilter["Replicate"] = ngsfilter["Sample_Name"].apply(lambda row: row.split("__")[-1])
     ngsfilter["Sample_Name"] = ngsfilter["Sample_Name"].apply(lambda row: row.split("__")[0])
     ngsfilter = ngsfilter[["Sample_Name", "Replicate"]].drop_duplicates()
     replicates = ngsfilter.groupby(["Sample_Name"], as_index=False)["Replicate"].count()
     a = pd.merge(a, replicates, on = "Sample_Name") # calculate number of replicates for each sample
+    a = a[a["called"] == 1]
 
 
-    for data in list(a.groupby(["Sample_Name", 'Marker'])):
-        b = data[1]
+    for dat in list(a.groupby(["Sample_Name", 'Marker'])):
+        b = dat[1]
         Sample = b["Sample_Name"].unique()[0]
         Marker = b["Marker"].unique()[0]
         NAmp = b["Replicate"].unique()[0]
@@ -362,17 +365,33 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
         # Check each allele if it correspond to criteria
         for allele in list(alleles.keys()):
             data = b[b["AlleleName"] == allele]
-            if len(data[pd.isna(data["flag"])]) == 0:  # if all alleles are flagged - all of them are unconfirmed
+            if len(data[data["flag"] == ""]) == 0:  # if all alleles are flagged - all of them are unconfirmed
                 unconfirmed.append(allele)
                 continue
             else:
-                if len(data[~pd.isna(data[
-                                         "flag"])]) > 0:  # if some alleles are flagged but unflagged are present as well - add it to "Confirmed alleles".
-                    confirmed.update({allele: len(data[~pd.isna(data["flag"])])})
+                if len(data[~(data["flag"]=="")]) > 0:  # if some alleles are flagged but unflagged are present as well - add it to "Confirmed alleles".
+                    confirmed.update({allele: len(data[~(data["flag"]=="")])})
                 if len(data) > Threshold:
                     consensus.append(allele)
                 else:
                     unconfirmed.append(allele)
+
+
+        if len(consensus) == 2:
+            NAmpOK = NAmp - abs(alleles[consensus[0]] - alleles[consensus[1]])
+            ADO = abs(alleles[consensus[0]] - alleles[consensus[1]])
+            ADORate = ADO / NAmpOK
+        elif len(consensus) == 1:
+            NAmpOK = alleles[consensus[0]]
+            ADO = 0
+            ADORate = 0
+        else:
+            NAmpOK = 0
+            ADO = 0
+            ADORate = 0
+        QualityIndex = NAmpOK / NAmp
+        Success = NAmpOK / NAmp * 100
+
 
         for i in range(4 - len(consensus)):  # what if length of consensus > 4?
             consensus += [""]
@@ -386,26 +405,14 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
         # Calculate number of successful amplifications and allelic dropouts (ADO). ADO - in how many replicated heterozygotes were not detected.
         # Amplification was not OK when its not heterozygote and contain second allele bellow threshold (how I understood from Tomaze's script).
         # I defined it differently - OK is when there are 2 alleles for heterozygotes and one for homozygotes.
-        if len(confirmed) == 2:
-            NAmpOK = NAmp - abs(alleles[list(confirmed.keys())[0]] - alleles[list(confirmed.keys())[1]])
-            ADO = abs(alleles[list(confirmed.keys())[0]] - alleles[list(confirmed.keys())[1]])
-            ADORate = ADO / NAmpOK
-        elif len(confirmed) == 1:
-            NAmpOK = alleles[list(confirmed.keys())[0]]
-            ADO = 0
-            ADORate = 0
-        else:
-            NAmpOK = 0
-            ADO = 0
-            ADORate = 0
-        QualityIndex = NAmpOK / NAmp
-        Success = NAmpOK / NAmp * 100
 
         cons = cons.append( {"Sample": Sample, "Mrkr": Marker, "Al1": consensus[0], "Al2": consensus[1], "Al3": consensus[2],
              "Al4": consensus[3], "NcnfA1": NcnfA1, "NCnfA2": NcnfA2,
              "ConfirmedAlleles": ';'.join(list(confirmed.keys())), "UnconfirmedAlleles": ';'.join(unconfirmed),
              "NAmp": NAmp, "NAmpOK": NAmpOK, "Success": Success,
              "ADO": ADO, "ADORate": ADORate, "QualityIndex": QualityIndex}, ignore_index=True)
+    cons.to_csv(f"{result}/{library}_Consensus_genotypes.txt", sep="\t", index=False)
+
 
 
 if __name__ == '__main__':
