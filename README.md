@@ -14,7 +14,7 @@ After sequencing, we need to detect all the samples and loci and then perform al
 OS X & Linux
 Install OBITools3 following to [developers’ instruction](https://git.metabarcoding.org/obitools/obitools3/wikis/Installing-the-OBITools3)
 
-python3, python3-venv, git, Cmake need to be installed. Also python packages Click==7.0, numpy==1.17.4, pandas==0.25.3 should be installed to obi3 environment. You can install it manually or use the following command.
+python3, python3-venv, git, Cmake need to be installed. Also python packages Click, numpy, pandas should be installed to obi3 environment. You can install it manually or use the following command.
 ```sh
 git clone https://github.com/PazhenkovaEA/ngs_pipelines.py
 cd ngs_pipelines.py
