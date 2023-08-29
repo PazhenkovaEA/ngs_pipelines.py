@@ -18,13 +18,6 @@ import click
 @click.option("--aliquotplates", default="AP", help="Folder name (not a path) with Aliquot plates, should be placed to the Project folder")
 
 def main(project, plates, tags, primers, aliquotplates):
-    project = "/Users/elena/PycharmProjects/ngs_pipelines/errors"
-    plates = "/Users/elena/PycharmProjects/ngs_pipelines/errors/190711_PlateNames_GATC.xlsx"
-    primers="/Users/elena/PycharmProjects/ngs_pipelines/errors/UA_primers.csv"
-    tags="/Users/elena/PycharmProjects/ngs_pipelines/errors/UA_tagscombo.csv"
-    aliquotplates="AP"
-
-
     if not os.path.exists(project):
         print("Incorrect project folder. Please, check your path!")
         exit()
