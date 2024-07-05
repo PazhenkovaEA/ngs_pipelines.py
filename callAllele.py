@@ -16,8 +16,8 @@ from collections import Counter
 @click.option("--reference_alleles", default="", help="Path to reference allele names")
 #set_value
 def main(project, primers, clean, progressive_threshold,make_graphs, reference_alleles):
-    #project ="./demo_wolf"
-    #primers = "./demo_wolf/primer_wolfA.csv"
+    #project ="./WF"
+    #primers = "./WF/loci.csv"
     #clean = True
     #progressive_threshold = False
     #make_graphs = True
@@ -184,10 +184,11 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
                 continue
             print(f"Processing {locus} locus, {library}")
 
-            tab = pd.read_csv(f"{project}/{lib}/{t}", sep = "\t", header=None) # Columns: 0 - sequence, 3 - dict with samples, 4 - total count, 5 - length
-            tab[3] = tab[3].apply(lambda row: ast.literal_eval(row)) # Transform obitools output in format {samplename:read_count} to dictionary
-            intermediate = tab.apply(lambda row: tab_to_genotypes(row), axis=1) # Creates dataframe-like object, which contains dataframes with genotypes
-            gen = pd.concat(intermediate.tolist()) # Combine it to one dataframe.
+            tab = pd.read_csv(f"{project}/{lib}/{t}", sep = "\t") # Columns: 0 - sequence, 3 - dict with samples, 4 - total count, 5 - length
+            tab = tab.loc[:, ~tab.columns.isin(["ID", 'DEFINITION', 'COUNT'])]
+            gen = pd.melt(tab, id_vars=['NUC_SEQ', 'seq_length'], var_name="Sample_Name", value_name="Read_Count")
+            gen["Sample_Name"].replace(to_replace="MERGED_sample:", value="",regex=True, inplace=True)
+
             #Add TagCombo
             ngsfilter = pd.read_csv(f"{project}/ngsfilters/{library}.ngsfilter", sep="\t", header=None)
             ngsfilter = ngsfilter[ngsfilter[0] == locus] #select rows corresponding to locus
@@ -195,7 +196,7 @@ def main(project, primers, clean, progressive_threshold,make_graphs, reference_a
             ngsfilter = ngsfilter[["Sample","TagCombo"]]
             gen = gen.merge(ngsfilter, left_on="Sample_Name", right_on="Sample")
             gen = gen.drop(["Sample"], axis=1)
-            gen.rename(columns={0:"Read_Count", 2:"TagCombo"}, inplace=True)
+            gen.rename(columns={2:"TagCombo", 'NUC_SEQ': "Sequence",'seq_length': "length"}, inplace=True)
             gen["Plate"] = gen["Sample_Name"].apply(lambda row: row.split("__")[-1])
             gen["Position"] = gen["Sample_Name"].apply(lambda row: row.split("__")[-2])
             gen["Sample_Name"] = gen["Sample_Name"].apply(lambda row: str(row.split("__")[0]))
