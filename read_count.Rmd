@@ -1,0 +1,31 @@
+---
+title: 'Read count report'
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup_chunk}
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+
+source("./custom_functions.R")
+```
+
+
+```{r}
+#add genotypes to "data" folder and go on.
+proj <- #add your project name
+#genotypes <- sprintf("/Volumes/Divja/ngslib/%s/results/%s_genotypes.txt", proj, proj)  
+genotypes <- sprintf("./%s/results/%s_genotypes.txt", proj, proj)  
+results <-  sprintf("./%s/results/", proj)  
+xy1 <- fread(genotypes, stringsAsFactors = FALSE,
+             colClasses = list(character = c(1, 4, 5, 7, 9, 11, 12),
+                               numeric = c(2, 3, 6)))
+showSumsByLibrary(xy1, loc = results, pos = unique(xy1$Plate))
+```
